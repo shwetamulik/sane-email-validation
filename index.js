@@ -1,4 +1,5 @@
 // Unicode ranges from RFC 3987, section 2.2
+const validTlds = ['com', 'org', 'net', 'edu', 'gov', 'uk', 'jp', 'de'] // Add more TLDs as needed
 const unicodeRanges = [
   '\u00A0-\uD7FF',
   '\uF900-\uFDCF',
@@ -20,25 +21,44 @@ const unicodeRanges = [
 ].join('')
 
 const methods = [
-  {
-    name: 'isEmail',
-    characters: unicodeRanges,
-    test: () => true
-  },
-  {
-    name: 'isAsciiEmail',
-    characters: '',
-    test: (localAddr, domain) => {
-      const labels = domain.split('.')
-      for (const label of labels) {
-        if (label.indexOf('xn--') === 0) {
-          return false
+    {
+        name: 'isEmail',
+        characters: unicodeRanges,
+        test: (localAddr, domain) => {
+          const labels = domain.split('.')
+          const tld = labels[labels.length - 1]
+    
+          // Check TLD validity
+          if (!validTlds.includes(tld.toLowerCase())) {
+            return false
+          }
+    
+          return true
+        }
+      },
+      {
+        name: 'isAsciiEmail',
+        characters: '',
+        test: (localAddr, domain) => {
+          const labels = domain.split('.')
+          for (const label of labels) {
+            if (label.indexOf('xn--') === 0) {
+              return true // check punycoded domains
+            }
+            if (/[\u0080-\uFFFF]/.test(label)) {
+              return false // Reject non-ASCII characters in the domain
+            }
+          }
+    
+          // Check TLD validity
+          const tld = labels[labels.length - 1]
+          if (!validTlds.includes(tld.toLowerCase())) {
+            return false
+          }
+    
+          return true
         }
       }
-
-      return true
-    }
-  }
 ].reduce((methods, { characters, name, test }) => {
   const localAddrRegex = new RegExp(`^[a-z0-9.!#$%&'*+/=?^_\`{|}~${characters}-]+$`, 'i')
   const label = `[a-z0-9${characters}](?:[a-z0-9${characters}-]{0,61}[a-z0-9${characters}])?`
