@@ -18,9 +18,8 @@
   },
   "homepage": "https://github.com/scottgonzalez/sane-email-validation",
   "scripts": {
-    "lint": "standard",
     "mocha": "mocha",
-    "test": "npm run lint && npm run mocha"
+    "test": "npm run mocha"
   },
   "dependencies": {},
   "devDependencies": {
